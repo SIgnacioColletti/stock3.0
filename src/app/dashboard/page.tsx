@@ -1,8 +1,8 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Package, FolderTree, DollarSign, TrendingUp } from 'lucide-react';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { Card, CardHeader, CardContent } from "@/components/ui/Card";
+import { Package, FolderTree, DollarSign, TrendingUp } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -28,39 +28,42 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const totalValue = products.reduce((acc, p) => acc + p.price, 0);
+  const totalValue = products.reduce((acc: number, p: any) => acc + p.price, 0);
   const activeProducts = await prisma.product.count({
     where: { storeId: session.user.storeId, isActive: true },
   });
 
   const stats = [
     {
-      title: 'Total Productos',
+      title: "Total Productos",
       value: productsCount,
       icon: Package,
-      color: 'bg-blue-500',
+      color: "bg-blue-500",
       description: `${activeProducts} activos`,
     },
     {
-      title: 'Categorías',
+      title: "Categorías",
       value: categoriesCount,
       icon: FolderTree,
-      color: 'bg-purple-500',
-      description: 'Total de categorías',
+      color: "bg-purple-500",
+      description: "Total de categorías",
     },
     {
-      title: 'Valor Inventario',
+      title: "Valor Inventario",
       value: `$${totalValue.toFixed(2)}`,
       icon: DollarSign,
-      color: 'bg-green-500',
-      description: store?.currency || 'USD',
+      color: "bg-green-500",
+      description: store?.currency || "USD",
     },
     {
-      title: 'Promedio Precio',
-      value: productsCount > 0 ? `$${(totalValue / productsCount).toFixed(2)}` : '$0',
+      title: "Promedio Precio",
+      value:
+        productsCount > 0
+          ? `$${(totalValue / productsCount).toFixed(2)}`
+          : "$0",
       icon: TrendingUp,
-      color: 'bg-orange-500',
-      description: 'Por producto',
+      color: "bg-orange-500",
+      description: "Por producto",
     },
   ];
 
@@ -69,9 +72,7 @@ export default async function DashboardPage() {
       {/* Título */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">
-          Resumen general de tu tienda
-        </p>
+        <p className="text-gray-500 mt-1">Resumen general de tu tienda</p>
       </div>
 
       {/* Stats Grid */}
@@ -124,7 +125,9 @@ export default async function DashboardPage() {
               className="p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-all text-center group"
             >
               <FolderTree className="w-8 h-8 text-gray-400 group-hover:text-primary mx-auto mb-2" />
-              <h3 className="font-medium text-gray-900">Gestionar Categorías</h3>
+              <h3 className="font-medium text-gray-900">
+                Gestionar Categorías
+              </h3>
               <p className="text-sm text-gray-500 mt-1">
                 Organiza tus productos
               </p>

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 // GET - Obtener reportes de inventario
 export async function GET(req: NextRequest) {
@@ -9,27 +9,27 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.storeId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
-    const reportType = searchParams.get('type') || 'summary';
+    const reportType = searchParams.get("type") || "summary";
 
     switch (reportType) {
-      case 'low-stock':
+      case "low-stock":
         return await getLowStockReport(session.user.storeId);
-      
-      case 'valuation':
+
+      case "valuation":
         return await getInventoryValuation(session.user.storeId);
-      
-      case 'summary':
+
+      case "summary":
       default:
         return await getInventorySummary(session.user.storeId);
     }
   } catch (error) {
-    console.error('Error fetching reports:', error);
+    console.error("Error fetching reports:", error);
     return NextResponse.json(
-      { error: 'Error al obtener reportes' },
+      { error: "Error al obtener reportes" },
       { status: 500 }
     );
   }
@@ -51,18 +51,18 @@ async function getLowStockReport(storeId: string) {
     },
   });
 
-  const lowStock = products.filter(p => p.stock <= p.minStock);
+  const lowStock = products.filter((p: any) => p.stock <= p.minStock);
 
   return NextResponse.json({
     total: lowStock.length,
-    products: lowStock.map(p => ({
+    products: lowStock.map((p: any) => ({
       id: p.id,
       name: p.name,
       sku: p.sku,
       stock: p.stock,
       minStock: p.minStock,
       category: p.category.name,
-      status: p.stock === 0 ? 'SIN_STOCK' : 'STOCK_BAJO',
+      status: p.stock === 0 ? "SIN_STOCK" : "STOCK_BAJO",
     })),
   });
 }
@@ -84,11 +84,11 @@ async function getInventoryValuation(storeId: string) {
     },
   });
 
-  const valuation = products.map(p => {
+  const valuation = products.map((p: any) => {
     const costValue = (p.cost || 0) * p.stock;
     const saleValue = p.price * p.stock;
     const potentialProfit = saleValue - costValue;
-    const margin = costValue > 0 ? ((potentialProfit / costValue) * 100) : 0;
+    const margin = costValue > 0 ? (potentialProfit / costValue) * 100 : 0;
 
     return {
       id: p.id,
@@ -106,7 +106,7 @@ async function getInventoryValuation(storeId: string) {
   });
 
   const totals = valuation.reduce(
-    (acc, item) => ({
+    (acc: any, item: any) => ({
       totalCostValue: acc.totalCostValue + item.costValue,
       totalSaleValue: acc.totalSaleValue + item.saleValue,
       totalPotentialProfit: acc.totalPotentialProfit + item.potentialProfit,
@@ -118,47 +118,58 @@ async function getInventoryValuation(storeId: string) {
     products: valuation,
     totals: {
       ...totals,
-      averageMargin: totals.totalCostValue > 0 
-        ? ((totals.totalPotentialProfit / totals.totalCostValue) * 100).toFixed(2)
-        : '0',
+      averageMargin:
+        totals.totalCostValue > 0
+          ? (
+              (totals.totalPotentialProfit / totals.totalCostValue) *
+              100
+            ).toFixed(2)
+          : "0",
     },
   });
 }
 
 // Resumen general de inventario
 async function getInventorySummary(storeId: string) {
-  const [products, totalProducts, activeProducts, lowStockCount] = await Promise.all([
-    prisma.product.findMany({
-      where: { storeId },
-      select: {
-        stock: true,
-        price: true,
-        cost: true,
-        minStock: true,
-        trackStock: true,
-      },
-    }),
-    prisma.product.count({ where: { storeId } }),
-    prisma.product.count({ where: { storeId, isActive: true } }),
-    prisma.product.count({
-      where: {
-        storeId,
-        trackStock: true,
-      },
-    }),
-  ]);
+  const [products, totalProducts, activeProducts, lowStockCount] =
+    await Promise.all([
+      prisma.product.findMany({
+        where: { storeId },
+        select: {
+          stock: true,
+          price: true,
+          cost: true,
+          minStock: true,
+          trackStock: true,
+        },
+      }),
+      prisma.product.count({ where: { storeId } }),
+      prisma.product.count({ where: { storeId, isActive: true } }),
+      prisma.product.count({
+        where: {
+          storeId,
+          trackStock: true,
+        },
+      }),
+    ]);
 
   const lowStock = products.filter(
-    p => p.trackStock && p.stock <= p.minStock
+    (p: any) => p.trackStock && p.stock <= p.minStock
   ).length;
 
   const outOfStock = products.filter(
-    p => p.trackStock && p.stock === 0
+    (p: any) => p.trackStock && p.stock === 0
   ).length;
 
-  const totalUnits = products.reduce((acc, p) => acc + p.stock, 0);
-  const totalValue = products.reduce((acc, p) => acc + (p.price * p.stock), 0);
-  const totalCost = products.reduce((acc, p) => acc + ((p.cost || 0) * p.stock), 0);
+  const totalUnits = products.reduce((acc: number, p: any) => acc + p.stock, 0);
+  const totalValue = products.reduce(
+    (acc: number, p: any) => acc + p.price * p.stock,
+    0
+  );
+  const totalCost = products.reduce(
+    (acc: number, p: any) => acc + (p.cost || 0) * p.stock,
+    0
+  );
 
   return NextResponse.json({
     totalProducts,

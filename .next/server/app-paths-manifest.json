@@ -1,6 +1,22 @@
 {
-  "/page": "app/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/products/route": "app/api/products/route.js",
+  "/api/categories/[id]/route": "app/api/categories/[id]/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
+  "/api/products/[id]/route": "app/api/products/[id]/route.js",
+  "/api/reports/inventory/route": "app/api/reports/inventory/route.js",
+  "/api/sales/route": "app/api/sales/route.js",
+  "/api/stock-movements/route": "app/api/stock-movements/route.js",
+  "/api/upload/route": "app/api/upload/route.js",
+  "/api/store/route": "app/api/store/route.js",
   "/login/page": "app/login/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/page": "app/page.js",
+  "/dashboard/categories/page": "app/dashboard/categories/page.js",
+  "/dashboard/products/page": "app/dashboard/products/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/inventory/page": "app/dashboard/inventory/page.js",
+  "/dashboard/sales/page": "app/dashboard/sales/page.js",
+  "/dashboard/products/[id]/page": "app/dashboard/products/[id]/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js"
 }

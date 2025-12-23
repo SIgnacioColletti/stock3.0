@@ -6,8 +6,8 @@
   --color-primary: #3b82f6;
   --color-secondary: #8b5cf6;
   --color-accent: #10b981;
-  --font-poppins: 'Poppins', sans-serif;
-  --font-inter: 'Inter', sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+  --font-inter: "Inter", sans-serif;
 }
 
 @layer base {
@@ -20,15 +20,15 @@
   .font-sans {
     font-family: var(--font-poppins);
   }
-  
+
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
-  
+
   .animate-slide-in {
     animation: slideIn 0.3s ease-out;
   }
-  
+
   .animate-scale-in {
     animation: scaleIn 0.2s ease-out;
   }

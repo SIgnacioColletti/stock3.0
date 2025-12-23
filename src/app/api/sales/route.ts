@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 // GET - Listar ventas
 export async function GET(req: NextRequest) {
@@ -9,12 +9,12 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.storeId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const paymentMethod = searchParams.get('paymentMethod');
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const paymentMethod = searchParams.get("paymentMethod");
 
     const sales = await prisma.sale.findMany({
       where: {
@@ -37,15 +37,15 @@ export async function GET(req: NextRequest) {
           select: { items: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limit,
     });
 
     return NextResponse.json(sales);
   } catch (error) {
-    console.error('Error fetching sales:', error);
+    console.error("Error fetching sales:", error);
     return NextResponse.json(
-      { error: 'Error al obtener ventas' },
+      { error: "Error al obtener ventas" },
       { status: 500 }
     );
   }
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.storeId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -73,21 +73,25 @@ export async function POST(req: NextRequest) {
 
     if (!items || items.length === 0) {
       return NextResponse.json(
-        { error: 'Debe incluir al menos un producto' },
+        { error: "Debe incluir al menos un producto" },
         { status: 400 }
       );
     }
 
     if (!paymentMethod) {
       return NextResponse.json(
-        { error: 'Método de pago es requerido' },
+        { error: "Método de pago es requerido" },
         { status: 400 }
       );
     }
 
     // Verificar stock y calcular total
     let total = 0;
-    const productUpdates = [];
+    const productUpdates: Array<{
+      id: string;
+      currentStock: number;
+      newStock: number;
+    }> = [];
     const stockMovements = [];
 
     for (const item of items) {
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
       }
 
       total += product.price * item.quantity;
-      
+
       // Preparar actualización de stock
       if (product.trackStock) {
         productUpdates.push({
@@ -122,7 +126,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Crear venta con todos los items y movimientos en transacción
-    const sale = await prisma.$transaction(async (tx) => {
+    const sale = await prisma.$transaction(async (tx: any) => {
       // Crear la venta
       const newSale = await tx.sale.create({
         data: {
@@ -164,7 +168,7 @@ export async function POST(req: NextRequest) {
 
         await tx.stockMovement.create({
           data: {
-            type: 'SALE',
+            type: "SALE",
             quantity: -(update.currentStock - update.newStock),
             previousStock: update.currentStock,
             newStock: update.newStock,
@@ -181,9 +185,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(sale);
   } catch (error) {
-    console.error('Error creating sale:', error);
+    console.error("Error creating sale:", error);
     return NextResponse.json(
-      { error: 'Error al crear venta' },
+      { error: "Error al crear venta" },
       { status: 500 }
     );
   }
