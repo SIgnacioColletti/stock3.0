@@ -1,0 +1,193 @@
+// Prisma Schema - Sistema E-commerce Genérico
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Usuario administrador del sistema
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  storeId   String?  @unique
+  store     Store?   @relation(fields: [storeId], references: [id])
+}
+
+// Configuración de la tienda
+model Store {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  logo        String?
+  
+  // Configuración de colores (JSON)
+  colors      Json       @default("{\"primary\":\"#3b82f6\",\"secondary\":\"#8b5cf6\",\"accent\":\"#10b981\",\"background\":\"#ffffff\",\"text\":\"#1f2937\"}")
+  
+  // Configuración general
+  currency    String     @default("USD")
+  language    String     @default("es")
+  timezone    String     @default("America/Argentina/Buenos_Aires")
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relaciones
+  user        User?
+  categories  Category[]
+  products    Product[]
+}
+
+// Categorías de productos
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  
+  // Relaciones
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products    Product[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([storeId])
+}
+
+// Productos (genérico para cualquier tipo)
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  
+  // Pricing
+  price       Float
+  comparePrice Float?  // Precio de comparación (antes/descuento)
+  cost        Float?   // Costo del producto
+  
+  // Inventory
+  sku         String?  @unique
+  stock       Int      @default(0)
+  minStock    Int      @default(5)  // Stock mínimo para alertas
+  trackStock  Boolean  @default(true)
+  
+  // Media
+  images      String[] // Array de URLs de imágenes
+  
+  // Atributos dinámicos (JSON)
+  // Ejemplo: {"color": "rojo", "talla": "M", "material": "algodón"}
+  attributes  Json     @default("{}")
+  
+  // Estado
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  
+  // Relaciones
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[]
+  saleItems   SaleItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([categoryId])
+  @@index([storeId])
+  @@index([slug])
+}
+
+// Movimientos de Stock
+model StockMovement {
+  id          String   @id @default(cuid())
+  
+  // Tipo de movimiento
+  type        String   // SALE (venta), ADJUSTMENT (ajuste), PURCHASE (compra), RETURN (devolución)
+  quantity    Int      // Cantidad (positivo o negativo)
+  previousStock Int    // Stock anterior
+  newStock    Int      // Stock nuevo
+  
+  // Motivo/Notas
+  reason      String?  // Motivo del ajuste
+  notes       String?  // Notas adicionales
+  
+  // Relaciones
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId     String
+  userId      String?  // Usuario que hizo el movimiento
+  saleId      String?  // Si es una venta
+  sale        Sale?    @relation(fields: [saleId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([productId])
+  @@index([storeId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Ventas
+model Sale {
+  id          String   @id @default(cuid())
+  
+  // Información de la venta
+  total       Float    // Total de la venta
+  paymentMethod String // CASH (efectivo), TRANSFER (transferencia), DEBIT (débito), CREDIT (crédito), QR
+  
+  // Detalles de pago
+  paymentReference String?  // Número de transferencia, últimos 4 dígitos de tarjeta, etc.
+  notes       String?       // Notas adicionales
+  
+  // Cliente (opcional)
+  customerName String?
+  customerEmail String?
+  customerPhone String?
+  
+  // Relaciones
+  storeId     String
+  userId      String?  // Usuario que registró la venta
+  items       SaleItem[]
+  stockMovements StockMovement[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([storeId])
+  @@index([paymentMethod])
+  @@index([createdAt])
+}
+
+// Items de una venta
+model SaleItem {
+  id          String   @id @default(cuid())
+  
+  quantity    Int
+  price       Float    // Precio al momento de la venta
+  subtotal    Float    // quantity × price
+  
+  // Snapshot del producto
+  productName String   // Nombre del producto al momento de venta
+  productSku  String?  // SKU al momento de venta
+  
+  // Relaciones
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  @@index([saleId])
+  @@index([productId])
+}
